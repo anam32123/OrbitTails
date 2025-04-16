@@ -34,22 +34,55 @@ if coord_sys=='Cartesian':
     v_y0 = st.sidebar.number_input('$v_y$ (km/s)', value=1200)
     v_z0 = st.sidebar.number_input('$v_z$ (km/s)', value=100)
 
-host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
+if (
+    "host_potential" not in st.session_state or
+    st.session_state.M200 != M200 or
+    st.session_state.c != c
+):
+    st.session_state.host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
+    st.session_state.M200 = M200
+    st.session_state.c = c
+
+
+# host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
 st.write(f"Initialized cluster potential with Virial Radius {M200:.4e} and concentration {c}")
+# improve this grid
 x = np.linspace(-1000, 1000, 100)
 z = np.linspace(-1000, 1000, 100)
-fig = host_potential.plot_contours(grid=(x, 1., z))
+fig = st.session_state.host_potential.plot_contours(grid=(x, 1., z))
 st.write(fig)
 
 st.write('Calculating orbit...')
-initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
-                                           vel=[v_x0,v_y0,v_z0] * u.km/u.s)
-galaxy_orbit = Orbit(host_potential, initial_conditions)
 
-fig = galaxy_orbit.plot_orbit(['x', 'y', 'z'])
-st.pyplot(fig)
-fig = galaxy_orbit.plot_orbit(['v_x', 'v_y', 'v_z'])
-st.pyplot(fig)
+if (
+    "intial_conditions" not in st.session_state or
+    st.session_state.x0 != x0 or
+    st.session_state.y0 != y0 or
+    st.session_state.z0 != z0 or
+    st.session_state.v_x0 != v_x0 or
+    st.session_state.v_y0 != v_y0 or
+    st.session_state.v_z0 != v_z0
+):
+    st.session_state.initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
+                                           vel=[v_x0,v_y0,v_z0] * u.km/u.s)
+    st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, st.session_state.initial_conditions)
+    st.session_state.x0 = x0
+    st.session_state.y0 = y0
+    st.session_state.z0 = z0
+    st.session_state.v_x0 = v_x0
+    st.session_state.v_y0 = v_y0
+    st.session_state.v_z0 = v_z0
+
+# initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
+#                                            vel=[v_x0,v_y0,v_z0] * u.km/u.s)
+initial_conditions = st.session_state.initial_conditions
+galaxy_orbit = st.session_state.galaxy_orbit
+# galaxy_orbit = Orbit(st.session_state.host_potential, initial_conditions)
+
+# fig = galaxy_orbit.plot_orbit(['x', 'y', 'z'])
+# st.pyplot(fig)
+# fig = galaxy_orbit.plot_orbit(['v_x', 'v_y', 'v_z'])
+# st.pyplot(fig)
 
 # trying the animation
 # galaxy_orbit.Animate_Orbit()
@@ -58,8 +91,12 @@ st.pyplot(fig)
 # calculate tail angles
 st.subheader('View 3D Tail Angles')
 galaxy_orbit.calc_3d_tail_angles()
-angle_time = st.slider('Time since initial conditions (Myr)', min_value=0., max_value=np.nanmax(galaxy_orbit.t).value, value=0.)
-st.write(f'3D tail angle unit vector: {galaxy_orbit.tail_angle_unit_vectors[:, angle_time]}')
+angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0.)
+angle_time_index = list(galaxy_orbit.t).index(angle_time)
+fig = galaxy_orbit.plot_orbits_not_animated(angle_time_index)
+st.write('Hello?')
+st.pyplot(fig)
+st.write(f'3D tail angle unit vector: {galaxy_orbit.tail_angle_unit_vectors[:, angle_time_index]}')
 
-st.subheader('2D Tail Angle Projections')
-st.number_input('Viewing angle inclination ($^\circ$)', value=0, min_value=0, max_value=180)
+# st.subheader('2D Tail Angle Projections')
+# st.number_input('Viewing angle inclination ($^\circ$)', value=0, min_value=0, max_value=180)
