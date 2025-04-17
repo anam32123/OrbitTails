@@ -9,6 +9,8 @@ from gala import integrate as gi
 from gala.units import galactic
 import streamlit.components.v1 as components
 
+from angle_transforms import *
+
 import matplotlib as mpl
 
 from orbit import Orbit
@@ -100,9 +102,19 @@ st.write(f'3D tail angle unit vector: {galaxy_orbit.tail_angle_unit_vectors[angl
 st.subheader('2D Tail Angle Projections')
 viewing_angle_sys = st.selectbox(label='Choose how to input viewing angle:', options=['Altitude/Azimuth', 'RA/Dec', '3D Vector'])
 if viewing_angle_sys=='Altitude/Azimuth':
-    st.number_input('Altitude', value=0, min_value=0, max_value=180)
+    alt_angle = st.number_input('Altitude', value=0, min_value=-90, max_value=90)
+    az_angle = st.number_input('Azimuth', value=0, min_value=0, max_value=360)
+
+    viewing_angle_vector = viewing_vector_from_angles(alt_angle, az_angle)
+
 if viewing_angle_sys=='3D Vector':
     view_x = st.number_input('$x$ component', value=0)
     view_y = st.number_input('$y$ component', value=0)
     view_z = st.number_input('$z$ component', value=0)
-tail_angle_vectors2d = galaxy_orbit.calc_2d_tail_angles_and_orbit(view_dir = [view_x, view_y, view_z])
+
+    viewing_angle_vector = [view_x, view_y, view_z]
+
+tail_angle_vectors2d, tail_angles = galaxy_orbit.calc_2d_tail_angles_and_orbit(view_dir = viewing_angle_vector)
+
+st.write(f"2D projection of 3D tail angle: {tail_angle_vectors2d[angle_time_index, :]}")
+st.write(f"In angular form (from $x$-axis): {tail_angles[angle_time_index]}$^\circ$")
