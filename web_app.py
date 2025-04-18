@@ -114,7 +114,7 @@ if viewing_angle_sys=='Altitude/Azimuth':
     alt_angle = st.number_input('Altitude', value=0, min_value=-90, max_value=90)
     az_angle = st.number_input('Azimuth', value=0, min_value=0, max_value=360)
 
-    viewing_angle_vector = viewing_vector_from_angles(alt_angle, az_angle)
+    viewing_angle_vector = viewing_vector_from_angles(az_angle, alt_angle)
 
 if viewing_angle_sys=='3D Vector':
     view_x = st.number_input('$x$ component', value=0)
