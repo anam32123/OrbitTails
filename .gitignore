@@ -1,2 +1,4 @@
 .ipynb_checkpoints
 __pycache__
+__pycache__/orbit.cpython-39.pyc
+__pycache__/plotting_utils.cpython-39.pyc
