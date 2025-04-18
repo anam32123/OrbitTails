@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import angle_transforms as angles
 
 def find_axes_limits(data, padding):
     data_min = np.nanmin(data)
@@ -42,3 +44,39 @@ def vector_to_tail_line(tail_vector, gal_position, x_vals, length=50):
     y_points = gal_position[1] + line_slope*(x_vals - gal_position[0])
     
     return y_points
+
+def plot_orbit(ax, x_data, y_data, time, time_index):
+
+    ax.text(0.05, 0.95, time[time_index], transform=ax.transAxes, fontsize=12,
+                              verticalalignment='top', horizontalalignment='left', 
+                              bbox=dict(facecolor='white', alpha=0.5))
+    ax.plot(0, 0, color="black", marker="x", zorder=1)
+    ax.plot(x_data[0], y_data[0], 'x', color='red', zorder=1)
+    ax.plot(x_data[:time_index], y_data[:time_index], alpha=0.75, zorder=2)
+    ax.plot(x_data[time_index], y_data[time_index], '*', markersize=10, color='orange', zorder=4)
+    ax.plot(x_data, y_data, '-', color='darkgray', linewidth=0.5, zorder=1, alpha=0.75)
+    ax.set_aspect('equal')
+
+    return
+
+def calc_tail_line(ax, x_data, y_data, tail_vector, time_index, tail_length=100, tail_distance=100):
+
+    # points for plotting the tail
+    tail_x_points = x_data[time_index-20:time_index:-1]
+
+    # solution: normalize 2-D projected vector
+    galaxy_x = x_data[time_index].value
+    galaxy_y = y_data[time_index].value
+
+    steps = np.linspace(0, tail_distance, tail_length)  # negative to go backward
+
+    normalized_2d_tail_angle_unit_vector = angles.norm_vector(tail_vector)
+
+    tail_x_points = galaxy_x + steps * normalized_2d_tail_angle_unit_vector[0]
+    tail_y_points = galaxy_y + steps * normalized_2d_tail_angle_unit_vector[1]
+
+    tail_point_selection = np.abs(tail_y_points - y_data[time_index].value) < 50
+    tail_x_points_selected = tail_x_points[tail_point_selection]
+    tail_y_points_selected = tail_y_points[tail_point_selection]
+
+    return tail_x_points_selected, tail_y_points_selected

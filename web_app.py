@@ -14,6 +14,8 @@ from angle_transforms import *
 import matplotlib as mpl
 
 from orbit import Orbit
+from orbit import Projected_Orbit
+# from Projected_Orbit import Projected_Orbit
 
 mpl.rcParams['animation.embed_limit'] = 100
 
@@ -24,6 +26,8 @@ M200 = st.sidebar.number_input('Virial Mass ($M_{\odot}$)', value=1.26e15, forma
 c = st.sidebar.number_input('Concentration', value=4)
 
 st.sidebar.header('Galaxy Parameters')
+timestep = st.sidebar.number_input('Integration timestep (Myr)', value=2, min_value=0)
+n_timesteps = st.sidebar.number_input('Number of timesteps', value=2000, min_value=0)
 coord_sys = st.sidebar.selectbox(label='Coordinate system', options=['Cartesian', 'Spherical', 'Cylindrical'], index=0)
 st.sidebar.subheader('Initial position')
 if coord_sys=='Cartesian':
@@ -57,23 +61,28 @@ st.write(fig)
 st.write('Calculating orbit...')
 
 if (
-    "intial_conditions" not in st.session_state or
-    st.session_state.x0 != x0 or
-    st.session_state.y0 != y0 or
-    st.session_state.z0 != z0 or
-    st.session_state.v_x0 != v_x0 or
-    st.session_state.v_y0 != v_y0 or
-    st.session_state.v_z0 != v_z0
+    "initial_conditions" not in st.session_state or
+    st.session_state.get("x0") != x0 or
+    st.session_state.get("y0") != y0 or
+    st.session_state.get("z0") != z0 or
+    st.session_state.get("v_x0") != v_x0 or
+    st.session_state.get("v_y0") != v_y0 or
+    st.session_state.get("v_z0") != v_z0 or
+    st.session_state.get("n_timesteps") != n_timesteps or
+    st.session_state.get("time_step") != timestep
 ):
     st.session_state.initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
                                            vel=[v_x0,v_y0,v_z0] * u.km/u.s)
-    st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, st.session_state.initial_conditions)
+    st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, st.session_state.initial_conditions, 
+                                          n_steps=n_timesteps, dt=timestep)
     st.session_state.x0 = x0
     st.session_state.y0 = y0
     st.session_state.z0 = z0
     st.session_state.v_x0 = v_x0
     st.session_state.v_y0 = v_y0
     st.session_state.v_z0 = v_z0
+    st.session_state.n_timesteps = n_timesteps
+    st.session_state.time_step = timestep
 
 # initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
 #                                            vel=[v_x0,v_y0,v_z0] * u.km/u.s)
@@ -110,11 +119,16 @@ if viewing_angle_sys=='Altitude/Azimuth':
 if viewing_angle_sys=='3D Vector':
     view_x = st.number_input('$x$ component', value=0)
     view_y = st.number_input('$y$ component', value=0)
-    view_z = st.number_input('$z$ component', value=0)
+    view_z = st.number_input('$z$ component', value=1)
 
     viewing_angle_vector = [view_x, view_y, view_z]
 
-tail_angle_vectors2d, tail_angles = galaxy_orbit.calc_2d_tail_angles_and_orbit(view_dir = viewing_angle_vector)
+angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0., key='2dtime')
+angle_time_index = list(galaxy_orbit.t).index(angle_time)
 
-st.write(f"2D projection of 3D tail angle: {tail_angle_vectors2d[angle_time_index, :]}")
-st.write(f"In angular form (from $x$-axis): {tail_angles[angle_time_index]}$^\circ$")
+orbit_projected = galaxy_orbit.project_orbit_tail_angles(view_dir = viewing_angle_vector)
+projected_figure = orbit_projected.plot_projected_orbit(angle_time_index)
+
+st.write(f"2D projection of 3D tail angle: {orbit_projected.tail_angles_2d_vectors[angle_time_index, :]}")
+st.write(f"In angular form (from $x$-axis): {orbit_projected.tail_angles_2d[angle_time_index]}$^\circ$")
+st.pyplot(projected_figure)
