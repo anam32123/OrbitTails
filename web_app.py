@@ -9,7 +9,7 @@ from gala import integrate as gi
 from gala.units import galactic
 import streamlit.components.v1 as components
 
-from angle_transforms import *
+from transforms import *
 
 import matplotlib as mpl
 
@@ -18,32 +18,47 @@ from orbit import Projected_Orbit
 # from Projected_Orbit import Projected_Orbit
 
 mpl.rcParams['animation.embed_limit'] = 100
+plt.rcParams['font.family']='serif'
+plt.rcParams['font.size']=14
 
 st.title('OrbitTails Web App')
 
+st.write("Use this software to to simulate the orbits of galaxies in large galaxy clusters and calculate the " \
+        "angle of the galaxy's ram pressure stripped tail in three dimensions and on the plane of the sky.")
+
 st.sidebar.header('Navarro-Frenk-White Cluster Potential Parameters')
+st.sidebar.write('The default input parameters approximate the gravitational potential of the Coma galaxy cluster')
 M200 = st.sidebar.number_input('Virial Mass ($M_{\odot}$)', value=1.26e15, format='%e', step=0.01e15)
 c = st.sidebar.number_input('Concentration', value=4)
 
 st.sidebar.header('Galaxy Parameters')
 timestep = st.sidebar.number_input('Integration timestep (Myr)', value=2, min_value=0)
 n_timesteps = st.sidebar.number_input('Number of timesteps', value=2000, min_value=0)
+initial_conditions_dict = {}
 coord_sys = st.sidebar.selectbox(label='Coordinate system', options=['Cartesian', 'Spherical', 'Cylindrical'], index=0)
 st.sidebar.subheader('Initial position')
 if coord_sys=='Cartesian':
-    x0 = st.sidebar.number_input('$x$ (kpc)', value=400)
-    y0 = st.sidebar.number_input('$y$ (kpc)', value=0)
-    z0 = st.sidebar.number_input('$z$ (kpc)', value=0)
+    initial_conditions_dict['x0'] = st.sidebar.number_input('$x$ (kpc)', value=400)
+    initial_conditions_dict['y0'] = st.sidebar.number_input('$y$ (kpc)', value=0)
+    initial_conditions_dict['z0'] = st.sidebar.number_input('$z$ (kpc)', value=0)
+if coord_sys=='Cylindrical':
+    initial_conditions_dict['r0'] = st.sidebar.number_input('Radial Position ($r$) [kpc]', value=400)
+    initial_conditions_dict['phi0'] = st.sidebar.number_input('Azimuthal angle ($\phi$) [$^\circ$]', value=0)
+    initial_conditions_dict['z0'] = st.sidebar.number_input('Height ($z$) [kpc]', value=0)
 st.sidebar.subheader('Initial Velocity')
 if coord_sys=='Cartesian':
-    v_x0 = st.sidebar.number_input('$v_x$ (km/s)', value=50)
-    v_y0 = st.sidebar.number_input('$v_y$ (km/s)', value=1200)
-    v_z0 = st.sidebar.number_input('$v_z$ (km/s)', value=100)
+    initial_conditions_dict['v_x0'] = st.sidebar.number_input('$v_x$ (km/s)', value=50)
+    initial_conditions_dict['v_y0'] = st.sidebar.number_input('$v_y$ (km/s)', value=1200)
+    initial_conditions_dict['v_z0'] = st.sidebar.number_input('$v_z$ (km/s)', value=100)
+if coord_sys=='Cylindrical':
+    initial_conditions_dict['v_r0'] = st.sidebar.number_input('Radial Velocity ($v_r$) [km/s]', value=400)
+    initial_conditions_dict['v_phi_tan0'] = st.sidebar.number_input('Tangential (azimuthal) velocity ($v_{\phi}$) [km/s]', value=1200)
+    initial_conditions_dict['v_z0'] = st.sidebar.number_input('Vertical velocity ($v_z$) [km/s]')
 
 if (
     "host_potential" not in st.session_state or
-    st.session_state.M200 != M200 or
-    st.session_state.c != c
+    st.session_state.get("M200") != M200 or
+    st.session_state.get("c") != c
 ):
     st.session_state.host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
     st.session_state.M200 = M200
@@ -51,43 +66,74 @@ if (
 
 
 # host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
-st.write(f"Initialized cluster potential with Virial Radius {M200:.4e} and concentration {c}")
+st.write(f"Initialized cluster potential with Virial Mass {M200:.4e}" + " $M_{\odot}$ " + f"and concentration {c}")
 # improve this grid
 x = np.linspace(-1000, 1000, 100)
 z = np.linspace(-1000, 1000, 100)
 fig = st.session_state.host_potential.plot_contours(grid=(x, 1., z))
 st.write(fig)
 
-st.write('Calculating orbit...')
-
-if (
-    "initial_conditions" not in st.session_state or
-    st.session_state.get("x0") != x0 or
-    st.session_state.get("y0") != y0 or
-    st.session_state.get("z0") != z0 or
-    st.session_state.get("v_x0") != v_x0 or
-    st.session_state.get("v_y0") != v_y0 or
-    st.session_state.get("v_z0") != v_z0 or
+recompute = (
+    st.session_state.get("coord_sys") != coord_sys or
     st.session_state.get("n_timesteps") != n_timesteps or
-    st.session_state.get("time_step") != timestep
-):
-    st.session_state.initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
-                                           vel=[v_x0,v_y0,v_z0] * u.km/u.s)
-    st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, st.session_state.initial_conditions, 
+    st.session_state.get("time_step") != timestep or
+    st.session_state.get("initial_conditions_dict") != initial_conditions_dict
+)
+
+if recompute:
+    if coord_sys == "Cartesian":
+        pos = [initial_conditions_dict['x0'], initial_conditions_dict['y0'], initial_conditions_dict['z0']] * u.kpc
+        vel = [initial_conditions_dict['v_x0'], initial_conditions_dict['v_y0'], initial_conditions_dict['v_z0']] * u.km/u.s
+        initial_conditions = gd.PhaseSpacePosition(pos=pos, vel=vel)
+
+    elif coord_sys == "Cylindrical":
+        rho = initial_conditions_dict['r0'] * u.kpc
+        phi = initial_conditions_dict['phi0'] * u.deg
+        z = initial_conditions_dict['z0'] * u.kpc
+
+        v_rho = initial_conditions_dict['v_r0'] * u.km/u.s
+        v_phi_tangential = initial_conditions_dict['v_phi_tan0']*u.km/u.s # angular velocity!
+        v_z = initial_conditions_dict['v_z0'] * u.km/u.s
+
+        initial_conditions = create_cylindrical_initial_conditions(rho, phi, z, v_rho, v_phi_tangential, v_z)
+    
+    st.session_state.initial_conditions = initial_conditions
+    st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, initial_conditions, 
                                           n_steps=n_timesteps, dt=timestep)
-    st.session_state.x0 = x0
-    st.session_state.y0 = y0
-    st.session_state.z0 = z0
-    st.session_state.v_x0 = v_x0
-    st.session_state.v_y0 = v_y0
-    st.session_state.v_z0 = v_z0
+    st.session_state.coord_sys = coord_sys
+    st.session_state.initial_conditions_dict = initial_conditions_dict
     st.session_state.n_timesteps = n_timesteps
     st.session_state.time_step = timestep
 
-# initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
+
+# if (
+#     "initial_conditions" not in st.session_state or
+#     st.session_state.get("x0") != x0 or
+#     st.session_state.get("y0") != y0 or
+#     st.session_state.get("z0") != z0 or
+#     st.session_state.get("v_x0") != v_x0 or
+#     st.session_state.get("v_y0") != v_y0 or
+#     st.session_state.get("v_z0") != v_z0 or
+#     st.session_state.get("n_timesteps") != n_timesteps or
+#     st.session_state.get("time_step") != timestep
+# ):
+#     st.session_state.initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
 #                                            vel=[v_x0,v_y0,v_z0] * u.km/u.s)
-initial_conditions = st.session_state.initial_conditions
-galaxy_orbit = st.session_state.galaxy_orbit
+#     st.session_state.galaxy_orbit = Orbit(st.session_state.host_potential, st.session_state.initial_conditions, 
+#                                           n_steps=n_timesteps, dt=timestep)
+#     st.session_state.x0 = x0
+#     st.session_state.y0 = y0
+#     st.session_state.z0 = z0
+#     st.session_state.v_x0 = v_x0
+#     st.session_state.v_y0 = v_y0
+#     st.session_state.v_z0 = v_z0
+#     st.session_state.n_timesteps = n_timesteps
+#     st.session_state.time_step = timestep
+
+# # initial_conditions = gd.PhaseSpacePosition(pos=[x0,y0,z0] * u.kpc,
+# #                                            vel=[v_x0,v_y0,v_z0] * u.km/u.s)
+# initial_conditions = st.session_state.initial_conditions
+# galaxy_orbit = st.session_state.galaxy_orbit
 # galaxy_orbit = Orbit(st.session_state.host_potential, initial_conditions)
 
 # fig = galaxy_orbit.plot_orbit(['x', 'y', 'z'])
@@ -100,9 +146,10 @@ galaxy_orbit = st.session_state.galaxy_orbit
 # components.html(galaxy_orbit.anim.to_jshtml(), height=1000)
 
 # calculate tail angles
+galaxy_orbit = st.session_state.galaxy_orbit
 st.subheader('View 3D Tail Angles')
 galaxy_orbit.calc_3d_tail_angles()
-angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0.)
+angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0., )
 angle_time_index = list(galaxy_orbit.t).index(angle_time)
 fig = galaxy_orbit.plot_orbits_not_animated(angle_time_index, with_tails=True)
 st.pyplot(fig)

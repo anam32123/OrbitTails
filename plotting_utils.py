@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import angle_transforms as angles
+import transforms as angles
 
 def find_axes_limits(data, padding):
     data_min = np.nanmin(data)

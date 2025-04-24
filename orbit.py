@@ -13,11 +13,41 @@ import matplotlib as mpl
 
 import plotting_utils as pu
 # from Projected_Orbit import Projected_Orbit
-from angle_transforms import *
+from transforms import *
 
 mpl.rcParams['animation.embed_limit'] = 50
 
 class Orbit:
+    '''
+    A class containing information about a galaxy's orbit in a cluster potential and key methods for integrating the orbit, calculating tail angle parameters, and plotting.
+
+        Attributes
+        ----------
+            orbit: gala.dynamics.Orbit
+                An Orbit object from the gala.dynamics library, intialized from initial conditions and the host potential
+            initial_conditions: gala.dynamics.PhaseSpacePosition
+                gala.dynamics.PhaseSpacePosition object holding phase space position information about the initial conditions of the galaxy orbit
+            x: astropy.units.Quantity
+                A 1D array containing positional information about the galaxy in the x-direction, for all integrated times.
+            y: astropy.units.Quantity
+                A 1D array containing positional information about the galaxy in the y-direction, for all integrated times.
+            z: astropy.units.Quantity
+                A 1D array containing positional information about the galaxy in the z-direction, for all integrated times.
+            vx: astropy.units.Quantity
+                A 1D array of the galaxy's velocity x-component for all times in the integration
+            vy: astropy.units.Quantity
+                A 1D array of the galaxy's velocity y-component for all times in the integration
+            vz: astropy.units.Quantity
+                A 1D array of the galaxy's velocity z-component for all times in the integration
+            t: astropy.units.Quantity
+                A 1D array of the time after the beginning of integration, for each timestep in the integration
+            velocity_magnitudes: numpy.ndarray
+                A 1D array of the magnitudes of velocity vectors over the course of the orbit.
+            tail_angle_unit_vectors: numpy.ndarray
+                An array of vectors (in each row for each time) representing the direction of the tail angle in three dimensions.
+            
+    '''
+
     def __init__(self, Gala_Potential, initial_conditions, dt=2., n_steps=2000):
         
         # print(f"Simulating an orbit in the host potential with intial conditions position = {initial_conditions.xyz}, velocity = {initial_conditions.v_xyz}")
