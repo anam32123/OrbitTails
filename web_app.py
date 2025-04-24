@@ -156,7 +156,10 @@ st.pyplot(fig)
 st.write(f'3D tail angle unit vector: {galaxy_orbit.tail_angle_unit_vectors[angle_time_index, :]}')
 
 st.subheader('2D Tail Angle Projections')
-viewing_angle_sys = st.selectbox(label='Choose how to input viewing angle:', options=['Altitude/Azimuth', 'RA/Dec', '3D Vector'])
+st.write("Here, choose a line-of-sight viewing angle. The viewing angle, whether in vector of altitude/azimuth form, corresponds to the" \
+"direction the viewer is looking, in a coordinate system whose origin is at cluster center. Input as a 3-D vector in " \
+"Cartesian coordinates or azimuth and elevation angles.")
+viewing_angle_sys = st.selectbox(label='Choose how to input viewing angle:', options=['Altitude/Azimuth', '3D Vector'])
 if viewing_angle_sys=='Altitude/Azimuth':
     alt_angle = st.number_input('Altitude', value=0, min_value=-90, max_value=90)
     az_angle = st.number_input('Azimuth', value=0, min_value=0, max_value=360)
@@ -176,6 +179,8 @@ angle_time_index = list(galaxy_orbit.t).index(angle_time)
 orbit_projected = galaxy_orbit.project_orbit_tail_angles(view_dir = viewing_angle_vector)
 projected_figure = orbit_projected.plot_projected_orbit(angle_time_index)
 
-st.write(f"2D projection of 3D tail angle: {orbit_projected.tail_angles_2d_vectors[angle_time_index, :]}")
-st.write(f"In angular form (from $x$-axis): {orbit_projected.tail_angles_2d[angle_time_index]}$^\circ$")
+st.write("2D tail angle is measured relative to the diection towards cluster center: An angle of $0^{\circ}$ means that the tail is pointing directly " \
+"toward the cluster center, while an angle of $180^{\circ}$ means it is pointing directly away from the cluster center.")
+st.write(f"2D projection of 3D tail angle in vector form: {orbit_projected.tail_angles_2d_vectors[angle_time_index, :]}")
+st.write(f"2D tail angle: {orbit_projected.tail_angles_2d_relative_deg[angle_time_index]:.2f}$^\circ$")
 st.pyplot(projected_figure)

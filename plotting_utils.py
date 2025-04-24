@@ -29,21 +29,21 @@ def find_limits_multiple_axes(data, padding):
 
     return [position_x_lowerlim, position_x_upperlim], [position_y_lowerlim, position_y_upperlim]
 
-def vector_to_tail_line(tail_vector, gal_position, x_vals, length=50):
+# def vector_to_tail_line(tail_vector, gal_position, x_vals, length=50):
     
-    '''
-    A function to calculate a line to draw a tail on a galaxy plot, given a galaxy position (a 2-d point, doesn't matter whether its xy, xz, etc.).
+#     '''
+#     A function to calculate a line to draw a tail on a galaxy plot, given a galaxy position (a 2-d point, doesn't matter whether its xy, xz, etc.).
     
-    '''
+#     '''
     
-    line_slope = tail_vector[1]/tail_vector[0]
+#     line_slope = tail_vector[1]/tail_vector[0]
     
-    # if np.abs(line_slope)<0.001:
-    #     print('Oops')
+#     # if np.abs(line_slope)<0.001:
+#     #     print('Oops')
     
-    y_points = gal_position[1] + line_slope*(x_vals - gal_position[0])
+#     y_points = gal_position[1] + line_slope*(x_vals - gal_position[0])
     
-    return y_points
+#     return y_points
 
 def plot_orbit(ax, x_data, y_data, time, time_index):
 

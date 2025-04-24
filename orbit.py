@@ -18,7 +18,7 @@ from transforms import *
 mpl.rcParams['animation.embed_limit'] = 50
 
 class Orbit:
-    '''
+    """
     A class containing information about a galaxy's orbit in a cluster potential and key methods for integrating the orbit, calculating tail angle parameters, and plotting.
 
         Attributes
@@ -26,7 +26,7 @@ class Orbit:
             orbit: gala.dynamics.Orbit
                 An Orbit object from the gala.dynamics library, intialized from initial conditions and the host potential
             initial_conditions: gala.dynamics.PhaseSpacePosition
-                gala.dynamics.PhaseSpacePosition object holding phase space position information about the initial conditions of the galaxy orbit
+                A PhaseSpacePosition object containing the galaxy's initial position and velocity in phase space.
             x: astropy.units.Quantity
                 A 1D array containing positional information about the galaxy in the x-direction, for all integrated times.
             y: astropy.units.Quantity
@@ -44,11 +44,25 @@ class Orbit:
             velocity_magnitudes: numpy.ndarray
                 A 1D array of the magnitudes of velocity vectors over the course of the orbit.
             tail_angle_unit_vectors: numpy.ndarray
-                An array of vectors (in each row for each time) representing the direction of the tail angle in three dimensions.
-            
-    '''
+                A 2D NumPy array where each row is a 3D unit vector representing the direction of the galaxy tail at each timestep.            
+    """
 
     def __init__(self, Gala_Potential, initial_conditions, dt=2., n_steps=2000):
+
+        """
+        Initializes an Orbit using the gala package's built-in orbit integration function, from initial conditions and a pre-specified host potential.
+
+            Parameters
+            ----------
+            Gala_Potential: gala.potential.PotentialBase
+                A gala potential object (e.g., HernquistPotential, NFWPotential) representing the host cluster potential.
+            initial_conditions: gala.dynamics.PhaseSpacePosition
+                A PhaseSpacePosition object containing the galaxy's initial position and velocity in phase space.
+            dt: float, optional
+                Time delta for orbit integration, in the time units of the host potential (default for galactic units is Myr). Default: 2
+            n_steps: int, optional
+                Number of timesteps of length dt for orbit integration. Default: 2000
+        """
         
         # print(f"Simulating an orbit in the host potential with intial conditions position = {initial_conditions.xyz}, velocity = {initial_conditions.v_xyz}")
 
@@ -58,17 +72,49 @@ class Orbit:
         self.x, self.y, self.z = self.orbit.xyz
         self.vx, self.vy, self.vz = self.orbit.v_xyz.to(u.km/u.s)
         self.t = self.orbit.t
-
-        return # don't need this
     
     def plot_orbit(self, *args, **kwargs):
+
+        """
+        A wrapper for the `gala.dynamics.Orbit.plot` function, which plots simulated orbits in a variety of potential coordinate systems.
+
+            Parameters
+            ----------
+            *args: list, optional
+                Positional arguments forwarded to `gala.dynamics.Orbit.plot`.
+            **kwargs: dict, optional
+                Keyword arguments forwarded to gala.dynamics.Orbit.plot
+
+            Returns
+            -------
+            None
+        """
         
         self.orbit.plot(*args, **kwargs)
-
-        return
     
     def calc_3d_tail_angles(self):
-    
+
+        """
+        Compute 3D velocity unit vectors and tail direction unit vectors for each timestep.
+
+        This method calculates unit vectors from the galaxy's velocity at each timestep,
+        stores the magnitudes of those velocity vectors, and defines the tail direction
+        as the opposite of the velocity direction (i.e., trailing behind the motion).
+
+            Sets
+            ----
+            self.velocity_magnitudes : numpy.ndarray
+                A 1D array containing the magnitude of the galaxy's velocity at each timestep.
+            self.velocity_unit_vectors : numpy.ndarray
+                A 2D array of shape (N, 3), where each row is the unit velocity vector at a given timestep.
+            self.tail_angle_unit_vectors : numpy.ndarray
+                A 2D array of shape (N, 3), where each row is a unit vector pointing in the tail direction (opposite velocity).
+            
+            Returns
+            -------
+            None
+        """
+
         vx, vy, vz = self.orbit.v_xyz.to(u.km/u.s)
         
         vx = np.array(vx)
@@ -88,6 +134,12 @@ class Orbit:
         return
     
     def Animate_Orbit(self):
+
+        """
+        Generates animations of galaxy orbits over time that include tail angle and position
+
+        THIS NEEDS TO BE FIXED
+        """
 
         fig, ax = plt.subplots(2, 3, figsize=(30, 20))
 
@@ -150,7 +202,27 @@ class Orbit:
     
     def plot_orbits_not_animated(self, time_index, with_tails=False):
         
-        '''With_tails requires that you have already calculated 3-D tail angles'''
+        '''
+        Plots galaxy orbits and tail angles for all cartesian position and velocity component combinations.
+        
+        The user can choose a specific time index of the orbit to view the tail direction and galaxy position/velocity for that
+        time, in addition to the past and future orbit.
+
+            Parameters
+            ----------
+            time_index: int
+                Index for the time axis/array, indicating the time at which we want to see a snapshot of the orbit
+            with_tails: boolean, optional
+                Flag indicating whether the user wants the orbit plotted with tail directions. If True, plots the tail direction 
+                for the time specified by time_index together with the galaxy and orbit. Setting with_tails=True requires that 
+                calc_3d_tail_angles has already been run for the given orbit. Default: False
+            
+            Returns
+            -------
+            fig: matplotlib.pyplot.Figure
+                Figure object containing the galaxy orbit plot.
+
+            '''
 
         fig, ax = plt.subplots(2, 3, figsize=(30, 20))
 
@@ -274,7 +346,15 @@ class Projected_Orbit:
         # take only the x and y (up and right) components to get the projection in 2D
         self.tail_angles_2d_vectors = rotated_tail_angles[:, :2]
         self.tail_angles_2d_vectors = norm_vector(self.tail_angles_2d_vectors) # normalizing calculated vectors
-        self.tail_angles_2d = np.arctan2(self.tail_angles_2d_vectors[:,1], self.tail_angles_2d_vectors[:,0])
+
+        tail_angles_2d = np.arctan2(self.tail_angles_2d_vectors[:,1], self.tail_angles_2d_vectors[:,0])
+        # towards_cluster_center_angle = np.arctan2(-self.projected_y.value, -self.projected_x.value)
+        # tail_angles_2d_relative = tail_angles_2d - towards_cluster_center_angle
+        # self.tail_angles_2d_relative_wrapped = (tail_angles_2d_relative + np.pi) % (2*np.pi) - np.pi
+        # self.tail_angles_2d_relative_deg = np.degrees(self.tail_angles_2d_relative_wrapped)
+        cluster_center_angle = np.arctan2(self.projected_y.value, self.projected_x.value)
+        self.tail_angles_2d_relative = np.abs(tail_angles_2d - cluster_center_angle) # this gives the angle relative to the direction AWAY from the cluster center
+        self.tail_angles_2d_relative_deg = 180 - np.degrees(self.tail_angles_2d_relative) # subtract 180 degrees to get the angle relative to direction towards cluster center
 
         self.t = self.original_orbit.t
 
