@@ -160,7 +160,7 @@ st.write(f'We report the tail angle in degrees as the angle between the tail dir
 
 st.subheader('2D Tail Angle Projections')
 st.write("Here, choose a line-of-sight viewing angle. The viewing angle, whether in vector or altitude/azimuth form, corresponds to the" \
-"direction the viewer is looking, in a coordinate system whose origin is at cluster center. Input as a 3-D vector in " \
+" direction the viewer is looking, in a coordinate system whose origin is at cluster center. Input as a 3-D vector in " \
 "Cartesian coordinates or azimuth and elevation angles.")
 viewing_angle_sys = st.selectbox(label='Choose how to input viewing angle:', options=['Altitude/Azimuth', '3D Vector'])
 if viewing_angle_sys=='Altitude/Azimuth':
