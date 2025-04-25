@@ -25,9 +25,11 @@ def viewing_vector_from_angles(az_deg, el_deg):
             - Angles are interpreted in a right-handed coordinate system, consistent with spherical coordinates.
     '''
 
+    # convert degrees to radians
     az = np.radians(az_deg)
     el = np.radians(el_deg)
     
+    # calculate in spherical coordinate with rho = 1
     x = np.cos(el) * np.cos(az)
     y = np.cos(el) * np.sin(az)
     z = np.sin(el)
@@ -50,14 +52,16 @@ def norm_vector(vector):
         -------
         normed_vector: np.ndarray
             1-D numpy array representing the normalized vector
-
+ 
         Notes
         -----
             Requires numpy
+            If `vector` is the zero vector, returns an array of zeros with the same shape as `vector`.
     '''
 
     magnitude = np.linalg.norm(vector)
 
+    # if the input is the zero vector, returns an array of zeros
     if magnitude==0:
         return np.zeros_like(vector)
     else:
@@ -91,9 +95,15 @@ def create_cylindrical_initial_conditions(r0, phi0, z0, v_r0, v_phi_tan0, v_z0):
     -------
     initial_conditions_cyl : gala.dynamics.PhaseSpacePosition
         A PhaseSpacePosition object defined in cylindrical coordinates.
+
+    Notes
+    -----
+    This function is helpful for producing initial conditions for a gala simulation in cylindrical coordinates.
     """
 
+    # convert tangential to angular velocity
     angular_velocity = v_phi_tan0 / r0 * u.rad # → rad/s
+    
     pos = CylindricalRepresentation(rho=r0, phi=phi0, z=z0)
     vel = CylindricalDifferential(d_rho=v_r0, d_phi=angular_velocity.to(u.rad/u.s), d_z=v_z0)
     initial_conditions_cyl = gd.PhaseSpacePosition(pos.with_differentials(vel))

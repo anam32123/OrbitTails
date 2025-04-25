@@ -23,34 +23,34 @@ class Orbit:
 
         Attributes
         ----------
-            orbit: gala.dynamics.Orbit
-                An Orbit object from the gala.dynamics library, intialized from initial conditions and the host potential
-            initial_conditions: gala.dynamics.PhaseSpacePosition
-                A PhaseSpacePosition object containing the galaxy's initial position and velocity in phase space.
-            x: astropy.units.Quantity
-                A 1D array containing positional information about the galaxy in the x-direction, for all integrated times.
-            y: astropy.units.Quantity
-                A 1D array containing positional information about the galaxy in the y-direction, for all integrated times.
-            z: astropy.units.Quantity
-                A 1D array containing positional information about the galaxy in the z-direction, for all integrated times.
-            vx: astropy.units.Quantity
-                A 1D array of the galaxy's velocity x-component for all times in the integration
-            vy: astropy.units.Quantity
-                A 1D array of the galaxy's velocity y-component for all times in the integration
-            vz: astropy.units.Quantity
-                A 1D array of the galaxy's velocity z-component for all times in the integration
-            t: astropy.units.Quantity
-                A 1D array of the time after the beginning of integration, for each timestep in the integration
-            velocity_magnitudes: numpy.ndarray
-                A 1D array of the magnitudes of velocity vectors over the course of the orbit.
-            tail_angle_unit_vectors: numpy.ndarray
-                A 2D NumPy array where each row is a 3D unit vector representing the direction of the galaxy tail at each timestep.
-            tail_3d_radial_angle_rad: numpy.ndarray
-                An array of 3D tail angles in radians for the galaxy at each point in its orbit, measured as the angle between the
-                galaxy tail and the radial direction to cluster center.
-            tail_3d_radial_angle_deg: numpy.ndarray
-                An array of 3D tail angles in radians for the galaxy at each point in its orbit, measured as the angle between the
-                galaxy tail and the radial direction to cluster center.
+        orbit: gala.dynamics.Orbit
+            An Orbit object from the gala.dynamics library, intialized from initial conditions and the host potential
+        initial_conditions: gala.dynamics.PhaseSpacePosition
+            A PhaseSpacePosition object containing the galaxy's initial position and velocity in phase space.
+        x: astropy.units.Quantity
+            A 1D array containing positional information about the galaxy in the x-direction, for all integrated times.
+        y: astropy.units.Quantity
+            A 1D array containing positional information about the galaxy in the y-direction, for all integrated times.
+        z: astropy.units.Quantity
+            A 1D array containing positional information about the galaxy in the z-direction, for all integrated times.
+        vx: astropy.units.Quantity
+            A 1D array of the galaxy's velocity x-component for all times in the integration
+        vy: astropy.units.Quantity
+            A 1D array of the galaxy's velocity y-component for all times in the integration
+        vz: astropy.units.Quantity
+            A 1D array of the galaxy's velocity z-component for all times in the integration
+        t: astropy.units.Quantity
+            A 1D array of the time after the beginning of integration, for each timestep in the integration
+        velocity_magnitudes: numpy.ndarray
+            A 1D array of the magnitudes of velocity vectors over the course of the orbit.
+        tail_angle_unit_vectors: numpy.ndarray
+            A 2D NumPy array where each row is a 3D unit vector representing the direction of the galaxy tail at each timestep.
+        tail_3d_radial_angle_rad: numpy.ndarray
+            An array of 3D tail angles in radians for the galaxy at each point in its orbit, measured as the angle between the
+            galaxy tail and the radial direction to cluster center.
+        tail_3d_radial_angle_deg: numpy.ndarray
+            An array of 3D tail angles in radians for the galaxy at each point in its orbit, measured as the angle between the
+            galaxy tail and the radial direction to cluster center.
     """
 
     def __init__(self, Gala_Potential, initial_conditions, dt=2., n_steps=2000):
@@ -58,6 +58,8 @@ class Orbit:
         """
         Initializes an Orbit using the gala package's built-in orbit integration function, from initial conditions and a pre-specified host potential.
 
+        Wrapper for `gala.potential.Hamiltonian.integrate_orbit`
+        
             Parameters
             ----------
             Gala_Potential: gala.potential.PotentialBase
@@ -70,7 +72,7 @@ class Orbit:
                 Number of timesteps of length dt for orbit integration. Default: 2000
         """
         
-        # print(f"Simulating an orbit in the host potential with intial conditions position = {initial_conditions.xyz}, velocity = {initial_conditions.v_xyz}")
+        print(f"Simulating an orbit in the host potential with intial conditions position = {initial_conditions.xyz}, velocity = {initial_conditions.v_xyz}")
 
         self.orbit = gp.Hamiltonian(Gala_Potential).integrate_orbit(initial_conditions, dt=dt, n_steps=n_steps)
         self.initial_conditions = initial_conditions
@@ -106,7 +108,9 @@ class Orbit:
         This method calculates unit vectors from the galaxy's velocity at each timestep,
         stores the magnitudes of those velocity vectors, and defines the tail direction
         as the opposite of the velocity direction (i.e., trailing behind the motion). Tail angles are calculated
-        as the 3D angle between the tail direction vector and the radial direction towards cluster center.
+        as the 3D angle between the tail direction vector and the radial direction towards cluster center, using
+        the dot product. An angle of 0 degrees corresponds to a tail pointing directly toward the cluster center, 
+        and 180 degrees to a tail pointing directly away.
 
             Sets
             ----
@@ -116,13 +120,19 @@ class Orbit:
                 A 2D array of shape (N, 3), where each row is the unit velocity vector at a given timestep.
             self.tail_angle_unit_vectors : numpy.ndarray
                 A 2D array of shape (N, 3), where each row is a unit vector pointing in the tail direction (opposite velocity).
-            
+            self.tail_3d_radial_angle_rad: numpy.ndarray
+                An array of 3D tail angles in radians for the galaxy at each point in its orbit, measured as the angle between the
+                galaxy tail and the radial direction to cluster center.
+            self.tail_3d_radial_angle_deg
+                An array of 3D tail angles in degrees for the galaxy at each point in its orbit, measured as the angle between the
+                galaxy tail and the radial direction to cluster center.
             
             Returns
             -------
             None
         """
 
+        # create velocity unit vectors
         vx, vy, vz = self.orbit.v_xyz.to(u.km/u.s)
         
         vx = np.array(vx)
@@ -131,39 +141,31 @@ class Orbit:
         
         velocity_vectors = np.vstack((vx, vy, vz))
         
+        # normalize the velocity vectors
         velocity_vectors = velocity_vectors.T
         self.velocity_magnitudes = np.apply_along_axis(np.linalg.norm, axis=1, arr=velocity_vectors)
         velocity_magnitudes = self.velocity_magnitudes[:, np.newaxis]
-        
         self.velocity_unit_vectors = velocity_vectors/velocity_magnitudes
 
+        # define tail angle vectors as the opposite of velocity vectors
         self.tail_angle_unit_vectors = -self.velocity_unit_vectors
 
         # forming the angle between the tail and the radial direction
-        # 1) Build the radial unit‐vector (galaxy → cluster)
-        #    If your galaxy is at (x,y,z) and the cluster is at the origin:
-        pos = np.vstack([self.x.value, self.y.value, self.z.value]).T    # shape (N,3)
-        radial_vec = -pos                             # points towards the cluster
-        # normalize radial vector
-        radii = np.linalg.norm(radial_vec, axis=1, keepdims=True)   # shape (N,1)
-        # avoid division by zero
-        radii[radii == 0] = 1.0                                      
-        radial_unit_vec = radial_vec / radii     # shape (N,3)
+        # Build the radial unit‐vector (galaxy → cluster) assuming cluster at origin
+        pos = np.vstack([self.x.value, self.y.value, self.z.value]).T
+        radial_vec = -pos                             # point toward the cluster, rather than galaxy
+        radii = np.linalg.norm(radial_vec, axis=1, keepdims=True)   
+        radii[radii == 0] = 1.0             # avoids division by 0                         
+        radial_unit_vec = radial_vec / radii
 
-        # 2) Get your tail‐direction unit‐vectors in 3D
-        # tail_unit_vec = self.original_orbit.tail_angle_3d_unit_vectors   # shape (N,3)
-
-        # 3) Dot‐product gives cos(θ)
+        # Dot‐product gives cos(θ)
         cos_theta = np.einsum('ij,ij->i', self.tail_angle_unit_vectors, radial_unit_vec) # performs row-wise dot product on the data
-        cos_theta = np.clip(cos_theta, -1.0, 1.0)                  # guard numerical overshoot
+        cos_theta = np.clip(cos_theta, -1.0, 1.0)                  # guard against numerical overshoot
 
-        # 4) Angle in radians (0 => perfectly toward; π => perfectly away)
+        # calculate and store the angles
         theta_rad = np.arccos(cos_theta)
-
-        # 5) (Optional) in degrees
         theta_deg = np.degrees(theta_rad)
 
-        # store on your object:
         self.tail_3d_radial_angle_rad = theta_rad
         self.tail_3d_radial_angle_deg = theta_deg
 
@@ -262,11 +264,14 @@ class Orbit:
 
         fig, ax = plt.subplots(2, 3, figsize=(30, 20))
 
+        # define combinations of datasets to plot on each axes
         data_combos = [[self.x, self.y], [self.x, self.z], [self.y, self.z], [self.vx, self.vy], [self.vx, self.vz], [self.vy, self.vz]]
 
+        # calculate good x/y limits for the plots based on the datasets
         position_xlim, position_ylim = pu.find_limits_multiple_axes(data_combos[0:3], 0.05)
         velocity_xlim, velocity_ylim = pu.find_limits_multiple_axes(data_combos[3:], 0.05)
         
+        # choosel the furthest limits of those calculated, and make it symmetrical
         max_y_lim = np.max(np.abs(position_ylim))
         max_x_lim = np.max(np.abs(position_xlim))
         pos_lims = (-np.max([max_x_lim, max_y_lim]), np.max([max_x_lim, max_y_lim]))
@@ -275,8 +280,6 @@ class Orbit:
         max_vx_lim = np.max(np.abs(velocity_xlim))
         vel_lims = (-np.max([max_vx_lim, max_vy_lim]), np.max([max_vx_lim, max_vy_lim]))
 
-        labels = [['$x$ (kpc)', '$y$ (kpc)'], ['$x$ (kpc)', '$z$ (kpc)'], ['$y$ (kpc)', '$z$ (kpc)'], ['$v_x$ (km/s)', '$v_y$ (km/s)'], ['$v_x$ (km/s)', '$v_z$ (km/s)'], ['$v_y$ (km/s)', '$v_z$ (km/s)']]
-
         for i in range(3):
             ax[0][i].set_xlim(pos_lims)
             ax[0][i].set_ylim(pos_lims)
@@ -284,17 +287,20 @@ class Orbit:
             ax[1][i].set_ylim(vel_lims)
             ax[1][i].set_ylim(velocity_ylim)
 
+        labels = [['$x$ (kpc)', '$y$ (kpc)'], ['$x$ (kpc)', '$z$ (kpc)'], ['$y$ (kpc)', '$z$ (kpc)'], ['$v_x$ (km/s)', '$v_y$ (km/s)'], ['$v_x$ (km/s)', '$v_z$ (km/s)'], ['$v_y$ (km/s)', '$v_z$ (km/s)']]
+
+        # plot the orbits on each axes by indexing into data_combos to get the right data
         current_data = 0
         for row in ax:
             for a in row:
-
+                
                 pu.plot_orbit(a, data_combos[current_data][0], data_combos[current_data][1], time=self.t, time_index=time_index)
                 a.set_xlabel(labels[current_data][0])
                 a.set_ylabel(labels[current_data][1])
 
                 current_data += 1
 
-
+        # add tails to the plots
         if with_tails:
             
             component_indices = {'$x$ (kpc)': 0, '$y$ (kpc)': 1, '$z$ (kpc)': 2}
@@ -305,6 +311,7 @@ class Orbit:
                 x_index = component_indices[labels[i][0]]
                 y_index = component_indices[labels[i][1]]
 
+                # retrieve tail vector and transform it into a line anchored at the galaxy position
                 tail_vector = self.tail_angle_unit_vectors[time_index, [x_index, y_index]]
 
                 tail_x_points_selected, tail_y_points_selected = pu.calc_tail_line(data_combos[i][0], data_combos[i][1], tail_vector=tail_vector, time_index=time_index)
@@ -407,9 +414,8 @@ class Projected_Orbit:
         up = np.cross(self.view_dir_normed, right)
 
         # transform cartesian tail angle vectors into viewer's basis
-        self.rot_matrix = np.vstack([right, up, self.view_dir_normed]).T
+        self.rot_matrix = np.vstack([right, up, self.view_dir_normed]).T # construct rotation matrix from basis vectors
         rotated_tail_angles = self.tail_angle_3d_unit_vectors.dot(self.rot_matrix)
-        # rotated_tail_angles = np.array(rotated_tail_angles)
 
         # rotate the orbit using the same matrix
         orbit_points = np.column_stack([self.original_orbit.x, self.original_orbit.y, self.original_orbit.z])
@@ -422,6 +428,7 @@ class Projected_Orbit:
         self.tail_angles_2d_vectors = rotated_tail_angles[:, :2]
         self.tail_angles_2d_vectors = norm_vector(self.tail_angles_2d_vectors) # normalizing calculated vectors
 
+        # calculate tail angles from direction vectors
         tail_angles_2d = np.arctan2(self.tail_angles_2d_vectors[:,1], self.tail_angles_2d_vectors[:,0])
         cluster_center_angle = np.arctan2(self.projected_y.value, self.projected_x.value)
         self.tail_angles_2d_relative_rad = np.abs(tail_angles_2d - cluster_center_angle) # this gives the angle relative to the direction AWAY from the cluster center
@@ -452,6 +459,7 @@ class Projected_Orbit:
         
         fig, ax = plt.subplots(1, 1)
 
+        # set reasonable x/y axis limits for the plots
         y_lims = pu.find_axes_limits(self.projected_y.value, 0.1)
         x_lims = pu.find_axes_limits(self.projected_x.value, 0.1)
         max_y_lim = np.max(np.abs(y_lims))
@@ -462,8 +470,10 @@ class Projected_Orbit:
         ax.set_ylim(lims)
         ax.set_aspect('equal')
 
+        # plot the projected orbit on the axis
         pu.plot_orbit(ax, self.projected_x, self.projected_y, self.t, time_index=time_index)
 
+        # add tail to the plot based on calculated tail angle vectors
         if with_tail:
             tail_angle_vector = self.tail_angles_2d_vectors[time_index, :]
             tail_x, tail_y = pu.calc_tail_line(self.projected_x, self.projected_y, tail_angle_vector, time_index)
@@ -478,7 +488,7 @@ class Projected_Orbit:
     def comparison_plots(self, time_index=None):
 
         """
-        Produces a plot for comparing true 3D tail angles and projected 2D counterparts.
+        Produces a plot for comparing true 3D tail angles and with their projected 2D counterparts.
 
             Parameters
             ----------
@@ -490,14 +500,17 @@ class Projected_Orbit:
         fig, ax = plt.subplots(1, 1)
         ax.set_title('Comparing 2D and 3D Tail Angles for Given Viewing Angle')
 
-        ax.plot(self.t, self.radial_tail_angles_3d_deg, label='3D tail angle\n(relative to radial direction)')
-        ax.plot(self.t, self.tail_angles_2d_relative_deg, label='Projected tail angle on the sky\n(relative to direction to cluster center)')
+        # plot 2D and 3D tail angles
+        ax.plot(self.t, self.radial_tail_angles_3d_deg, label='3D tail angle\n(relative to radial direction)', color='deepskyblue')
+        ax.plot(self.t, self.tail_angles_2d_relative_deg, label='Projected tail angle on the sky\n(relative to direction to cluster center)', color='darkorchid')
         
+        # add a vertical line indicating the selected time
         if time_index != None:
-            ax.plot(self.t[time_index], self.radial_tail_angles_3d_deg[time_index], '.')
-            ax.plot(self.t[time_index], self.tail_angles_2d_relative_deg[time_index], '.')
-            ax.axvline(self.t[time_index].value, linestyle='--')
+            ax.plot(self.t[time_index], self.radial_tail_angles_3d_deg[time_index], '.', color='deepskyblue')
+            ax.plot(self.t[time_index], self.tail_angles_2d_relative_deg[time_index], '.', color='darkorchid')
+            ax.axvline(self.t[time_index].value, linestyle='--', color='lightcoral')
 
+        # calculate limits on the plot so there is room for the large legend
         lims_2d = pu.find_axes_limits(self.radial_tail_angles_3d_deg, 0.75)
         lims_3d = pu.find_axes_limits(self.tail_angles_2d_relative_deg, 0.75)
         lower_lim = np.min([lims_2d[0], lims_3d[0]])
