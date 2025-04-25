@@ -59,7 +59,7 @@ def norm_vector(vector):
     magnitude = np.linalg.norm(vector)
 
     if magnitude==0:
-        return 0
+        return np.zeros_like(vector)
     else:
         normed_vector = vector/magnitude
     

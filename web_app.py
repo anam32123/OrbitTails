@@ -28,14 +28,14 @@ st.write("Use this software to to simulate the orbits of galaxies in large galax
 
 st.sidebar.header('Navarro-Frenk-White Cluster Potential Parameters')
 st.sidebar.write('The default input parameters approximate the gravitational potential of the Coma galaxy cluster')
-M200 = st.sidebar.number_input('Virial Mass ($M_{\odot}$)', value=1.26e15, format='%e', step=0.01e15)
-c = st.sidebar.number_input('Concentration', value=4)
+M200 = st.sidebar.number_input('Virial Mass ($M_{\odot}$)', value=1.26e15, format='%e', step=0.01e15, min_value=0.)
+c = st.sidebar.number_input('Concentration', value=4., min_value=0.)
 
 st.sidebar.header('Galaxy Parameters')
 timestep = st.sidebar.number_input('Integration timestep (Myr)', value=2, min_value=0)
 n_timesteps = st.sidebar.number_input('Number of timesteps', value=2000, min_value=0)
 initial_conditions_dict = {}
-coord_sys = st.sidebar.selectbox(label='Coordinate system', options=['Cartesian', 'Spherical', 'Cylindrical'], index=0)
+coord_sys = st.sidebar.selectbox(label='Coordinate system', options=['Cartesian', 'Cylindrical'], index=0)
 st.sidebar.subheader('Initial position')
 if coord_sys=='Cartesian':
     initial_conditions_dict['x0'] = st.sidebar.number_input('$x$ (kpc)', value=400)
@@ -104,6 +104,8 @@ if recompute:
     st.session_state.initial_conditions_dict = initial_conditions_dict
     st.session_state.n_timesteps = n_timesteps
     st.session_state.time_step = timestep
+    st.session_state.galaxy_orbit.calc_3d_tail_angles()
+
 
 
 # if (
@@ -148,15 +150,16 @@ if recompute:
 # calculate tail angles
 galaxy_orbit = st.session_state.galaxy_orbit
 st.subheader('View 3D Tail Angles')
-galaxy_orbit.calc_3d_tail_angles()
 angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0., )
 angle_time_index = list(galaxy_orbit.t).index(angle_time)
 fig = galaxy_orbit.plot_orbits_not_animated(angle_time_index, with_tails=True)
 st.pyplot(fig)
-st.write(f'3D tail angle unit vector: {galaxy_orbit.tail_angle_unit_vectors[angle_time_index, :]}')
+vec_3d = galaxy_orbit.tail_angle_unit_vectors[angle_time_index, :]
+st.markdown(f"**3D Tail Direction Unit Vector**: ({vec_3d[0]:.2f}, {vec_3d[1]:.2f}, {vec_3d[2]:.2f})")
+st.write(f'We report the tail angle in degrees as the angle between the tail direction vector and the radial direction to the cluster center: {galaxy_orbit.tail_3d_radial_angle_deg[angle_time_index]:.2f}' + '$^{\circ}$')
 
 st.subheader('2D Tail Angle Projections')
-st.write("Here, choose a line-of-sight viewing angle. The viewing angle, whether in vector of altitude/azimuth form, corresponds to the" \
+st.write("Here, choose a line-of-sight viewing angle. The viewing angle, whether in vector or altitude/azimuth form, corresponds to the" \
 "direction the viewer is looking, in a coordinate system whose origin is at cluster center. Input as a 3-D vector in " \
 "Cartesian coordinates or azimuth and elevation angles.")
 viewing_angle_sys = st.selectbox(label='Choose how to input viewing angle:', options=['Altitude/Azimuth', '3D Vector'])
@@ -181,6 +184,12 @@ projected_figure = orbit_projected.plot_projected_orbit(angle_time_index)
 
 st.write("2D tail angle is measured relative to the diection towards cluster center: An angle of $0^{\circ}$ means that the tail is pointing directly " \
 "toward the cluster center, while an angle of $180^{\circ}$ means it is pointing directly away from the cluster center.")
-st.write(f"2D projection of 3D tail angle in vector form: {orbit_projected.tail_angles_2d_vectors[angle_time_index, :]}")
-st.write(f"2D tail angle: {orbit_projected.tail_angles_2d_relative_deg[angle_time_index]:.2f}$^\circ$")
+vec_2d = orbit_projected.tail_angles_2d_vectors[angle_time_index, :]
+st.markdown(f"**2D projected direction of 3D tail in vector form**: ({vec_2d[0]:.2f}, {vec_2d[1]:.2f})")
+# st.write(f"2D projected direction of 3D tail in vector form: {orbit_projected.tail_angles_2d_vectors[angle_time_index, :]}")
+st.markdown(f"**2D tail angle:** {orbit_projected.tail_angles_2d_relative_deg[angle_time_index]:.2f}$^\circ$")
 st.pyplot(projected_figure)
+
+st.subheader('Comparing 2D and 3D Tail Angles')
+fig = orbit_projected.comparison_plots(angle_time_index)
+st.pyplot(fig)

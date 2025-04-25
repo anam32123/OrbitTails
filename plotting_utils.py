@@ -2,7 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import transforms as angles
 
-def find_axes_limits(data, padding):
+def find_axes_limits(data, padding=0.05):
+
+    '''
+    Finds ideal axes limits for a given dataset and certain padding percentage.
+    These limits should be applied in a plot to the axis corresponding to the dimension in which the dataset is plotted.
+
+        Parameters
+        ----------
+        data: numpy.ndarray
+        Dataset for which we calculate outer limits
+        padding: float
+        Fraction of the total data range by which we wish to pad (to make m)
+    '''
     data_min = np.nanmin(data)
     data_max = np.nanmax(data)
     range_padding = np.abs(data_max - data_min) * padding

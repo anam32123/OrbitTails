@@ -29,7 +29,7 @@ git clone
  - Generate a gravitational potential that approximates that of the galaxy cluster of interest.
      - For the Coma cluster, we adopt a Navarro-Frenk-White potential with Virial Mass $1.26\times10^{15} M_{sun}$ and concentration 4 (Lokas & Mamon 2003).
  - Simulate the orbit of a galaxy with user-specified initial conditions in the cluster potential.
- - Compute 3D tail directions throughout the orbit.
+ - Compute 3D tail directions throughout the orbit. Tails are tangential to the orbit and point opposite to the velocity. We measure a "tail angle" in three dimensions as the angle between the tail direction vector and the radial direction toward cluster center in 3D.
  - Specify a line-of-sight viewing direction, and project the orbit and tail directions into the viewer's 2D perspective. 
      - Construct a coordinate frame, with origin at cluster center, that defines the viewer's perspective/line-of-sight.
      - Rotate/transform orbits from the Cartesian coordinate basis into the viewer's coordinate system.
