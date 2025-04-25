@@ -67,6 +67,32 @@ def norm_vector(vector):
 
 def create_cylindrical_initial_conditions(r0, phi0, z0, v_r0, v_phi_tan0, v_z0):
 
+    """
+    Generates a gala.dynamics.PhaseSpacePosition object based on positions and velocity input in cylindrical coordinates.
+
+    The azimuthal velocity is internally converted to an angular velocity for compatibility with gala's cylindrical differential format.
+
+    Parameters
+    ----------
+    r0 : astropy.units.Quantity
+        Radial position (distance from axis), with units of length (e.g., kpc).
+    phi0 : astropy.units.Quantity
+        Azimuthal angle (e.g., in radians).
+    z0 : astropy.units.Quantity
+        Height above the midplane (z-position), with units of length.
+    v_r0 : astropy.units.Quantity
+        Radial velocity component, with velocity units (e.g., km/s).
+    v_phi_tan0 : astropy.units.Quantity
+        Tangential velocity component (in the azimuthal direction), with velocity units.
+    v_z0 : astropy.units.Quantity
+        Vertical velocity component, with velocity units.
+
+    Returns
+    -------
+    initial_conditions_cyl : gala.dynamics.PhaseSpacePosition
+        A PhaseSpacePosition object defined in cylindrical coordinates.
+    """
+
     angular_velocity = v_phi_tan0 / r0 * u.rad # → rad/s
     pos = CylindricalRepresentation(rho=r0, phi=phi0, z=z0)
     vel = CylindricalDifferential(d_rho=v_r0, d_phi=angular_velocity.to(u.rad/u.s), d_z=v_z0)

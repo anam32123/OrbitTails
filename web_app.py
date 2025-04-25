@@ -68,10 +68,10 @@ if (
 # host_potential = gp.NFWPotential.from_M200_c(M200 * u.Msun, c, units=galactic)
 st.write(f"Initialized cluster potential with Virial Mass {M200:.4e}" + " $M_{\odot}$ " + f"and concentration {c}")
 # improve this grid
-x = np.linspace(-1000, 1000, 100)
-z = np.linspace(-1000, 1000, 100)
-fig = st.session_state.host_potential.plot_contours(grid=(x, 1., z))
-st.write(fig)
+# x = np.linspace(-1000, 1000, 100)
+# z = np.linspace(-1000, 1000, 100)
+# fig = st.session_state.host_potential.plot_contours(grid=(x, 1., z))
+# st.write(fig)
 
 recompute = (
     st.session_state.get("coord_sys") != coord_sys or
@@ -180,7 +180,7 @@ angle_time = st.select_slider('Time since initial conditions (Myr)', options=lis
 angle_time_index = list(galaxy_orbit.t).index(angle_time)
 
 orbit_projected = galaxy_orbit.project_orbit_tail_angles(view_dir = viewing_angle_vector)
-projected_figure = orbit_projected.plot_projected_orbit(angle_time_index)
+projected_figure = orbit_projected.plot_projected_orbit(angle_time_index, with_tail=True)
 
 st.write("2D tail angle is measured relative to the diection towards cluster center: An angle of $0^{\circ}$ means that the tail is pointing directly " \
 "toward the cluster center, while an angle of $180^{\circ}$ means it is pointing directly away from the cluster center.")

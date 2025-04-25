@@ -4,17 +4,24 @@ import transforms as angles
 
 def find_axes_limits(data, padding=0.05):
 
-    '''
+    """
     Finds ideal axes limits for a given dataset and certain padding percentage.
     These limits should be applied in a plot to the axis corresponding to the dimension in which the dataset is plotted.
 
         Parameters
         ----------
         data: numpy.ndarray
-        Dataset for which we calculate outer limits
+            NumPy array containing data to be plotted.
         padding: float
-        Fraction of the total data range by which we wish to pad (to make m)
-    '''
+            Fraction of the total data range to use as padding beyond the min and max values. Default: 0.05
+
+        Returns
+        -------
+        lower_limit : float
+            The padded lower bound for the axis.
+        upper_limit : float
+            The padded upper bound for the axis.
+    """
     data_min = np.nanmin(data)
     data_max = np.nanmax(data)
     range_padding = np.abs(data_max - data_min) * padding
@@ -22,9 +29,28 @@ def find_axes_limits(data, padding=0.05):
     return data_min - range_padding, data_max + range_padding
 
 def find_limits_multiple_axes(data, padding):
-    '''
-    data should include [[xdata, ydata], [xdata, ydata], ...] in the number of pairs of data
-    '''
+    """
+    Compute global axis limits for multiple 2D data plots with consistent padding.
+
+    This function takes a list of [x, y] data pairs (e.g., for subplots showing different
+    2D projections) and computes the minimum and maximum x and y limits across all pairs,
+    with a consistent fractional padding applied to each axis.
+
+    Parameters
+    ----------
+    data : list of list of astropy.units.Quantity or numpy.ndarray
+        A list where each element is a [x_data, y_data] pair. Each `x_data` and `y_data` should be
+        1D arrays with units (e.g., astropy Quantities) or plain NumPy arrays of the same shape.
+    padding : float
+        Fraction of the data range to use as padding beyond the min and max values for both axes.
+
+    Returns
+    -------
+    x_limits : list of float
+        A list [x_min, x_max] representing the padded global x-axis limits across all input pairs.
+    y_limits : list of float
+        A list [y_min, y_max] representing the padded global y-axis limits across all input pairs.
+    """
     position_y_lowerlim = np.zeros(3)
     position_y_upperlim = np.zeros(3)
     position_x_lowerlim = np.zeros(3)
@@ -41,24 +67,35 @@ def find_limits_multiple_axes(data, padding):
 
     return [position_x_lowerlim, position_x_upperlim], [position_y_lowerlim, position_y_upperlim]
 
-# def vector_to_tail_line(tail_vector, gal_position, x_vals, length=50):
-    
-#     '''
-#     A function to calculate a line to draw a tail on a galaxy plot, given a galaxy position (a 2-d point, doesn't matter whether its xy, xz, etc.).
-    
-#     '''
-    
-#     line_slope = tail_vector[1]/tail_vector[0]
-    
-#     # if np.abs(line_slope)<0.001:
-#     #     print('Oops')
-    
-#     y_points = gal_position[1] + line_slope*(x_vals - gal_position[0])
-    
-#     return y_points
+
 
 def plot_orbit(ax, x_data, y_data, time, time_index):
 
+    """
+    Plot a galaxy's orbit on a 2D subplot with annotations for current position and time.
+
+    This function plots the full orbit trajectory, highlights the current position of the
+    galaxy at a specified time index, and marks the cluster center. It also displays the
+    simulation time as an annotation within the plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The Matplotlib Axes object on which to plot the orbit.
+    x_data : array-like
+        The x-coordinates of the galaxy's position over time (can be a Quantity or NumPy array).
+    y_data : array-like
+        The y-coordinates of the galaxy's position over time.
+    time : array-like
+        Array of time values corresponding to each point in the orbit.
+    time_index : int
+        Index of the current timestep to highlight in the plot.
+
+    Returns
+    -------
+    None
+    """
+    
     ax.text(0.05, 0.95, time[time_index], transform=ax.transAxes, fontsize=12,
                               verticalalignment='top', horizontalalignment='left', 
                               bbox=dict(facecolor='white', alpha=0.5))
@@ -71,7 +108,38 @@ def plot_orbit(ax, x_data, y_data, time, time_index):
 
     return
 
-def calc_tail_line(ax, x_data, y_data, tail_vector, time_index, tail_length=100, tail_distance=100):
+def calc_tail_line(x_data, y_data, tail_vector, time_index, tail_length=100, tail_distance=100):
+
+    """
+    Calculate 2D coordinates for plotting a projected tail vector extending from a galaxy's position.
+
+    This function generates a line segment representing the galaxy's tail direction
+    in a 2D projected frame. The tail is constructed as a series of points extending
+    from the galaxy's current position in the direction of the given tail vector.
+
+    Parameters
+    ----------
+    x_data : array-like
+        1D array of x-coordinates of the galaxy over time.
+    y_data : array-like
+        1D array of y-coordinates of the galaxy over time.
+    tail_vector : array-like
+        A 2D vector representing the projected tail direction (does not need to be normalized).
+    time_index : int
+        The index of the timestep at which to place the tail's origin (i.e., the galaxy's current position).
+    tail_length : int, optional
+        Number of points to generate along the tail line. Default is 100.
+    tail_distance : float, optional
+        Maximum physical distance from the galaxy to extend the tail line. Default is 100.
+
+    Returns
+    -------
+    tail_x_points_selected : numpy.ndarray
+        1D array of x-coordinates for the tail segment to be plotted.
+    tail_y_points_selected : numpy.ndarray
+        1D array of y-coordinates for the tail segment to be plotted.
+    """
+
 
     # points for plotting the tail
     tail_x_points = x_data[time_index-20:time_index:-1]

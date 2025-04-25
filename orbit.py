@@ -239,32 +239,29 @@ class Orbit:
     
     def plot_orbits_not_animated(self, time_index, with_tails=False):
         
-        '''
-        Plots galaxy orbits and tail angles for all cartesian position and velocity component combinations.
+        """
+        Plot 2D projections of the galaxy's orbit and velocity in Cartesian coordinates at a specific timestep.
 
-        The user can choose a specific time index of the orbit to view the tail direction and galaxy position/velocity for that
-        time, in addition to the past and future orbit.
+        This function produces six subplots showing all combinations of position and velocity components (x, y, z),
+        with an optional overlay of the tail direction vector at a specified time index.
 
             Parameters
             ----------
             time_index: int
-                Index for the time axis/array, indicating the time at which we want to see a snapshot of the orbit
+                Index into the time array `self.t` indicating the moment at which to show the orbit snapshot and (optionally) the tail direction.            
             with_tails: boolean, optional
-                Flag indicating whether the user wants the orbit plotted with tail directions. If True, plots the tail direction 
-                for the time specified by time_index together with the galaxy and orbit. Setting with_tails=True requires that 
-                calc_3d_tail_angles has already been run for the given orbit. Default: False
+                If True, plots the tail direction for the timestep specified by time_index together with the galaxy and orbit. 
+                Requires that calc_3d_tail_angles has already been run for the given orbit. Default: False
             
             Returns
             -------
             fig: matplotlib.pyplot.Figure
-                Figure object containing the galaxy orbit plot.
+                Figure object containing the galaxy orbit position and velocity projection plots.
 
-            '''
+        """
 
         fig, ax = plt.subplots(2, 3, figsize=(30, 20))
 
-        orbit_lines = []
-        galaxy_points = []
         data_combos = [[self.x, self.y], [self.x, self.z], [self.y, self.z], [self.vx, self.vy], [self.vx, self.vz], [self.vy, self.vz]]
 
         position_xlim, position_ylim = pu.find_limits_multiple_axes(data_combos[0:3], 0.05)
@@ -290,15 +287,6 @@ class Orbit:
         current_data = 0
         for row in ax:
             for a in row:
-                # a.text(0.05, 0.95, self.t[time_index], transform=a.transAxes, fontsize=12,
-                #               verticalalignment='top', horizontalalignment='left', 
-                #               bbox=dict(facecolor='white', alpha=0.5))
-                # a.plot(0, 0, color="black", marker="x", zorder=1)
-                # a.plot(data_combos[current_data][0][0], data_combos[current_data][1][0], 'x', color='red', zorder=1)
-                # a.plot(data_combos[current_data][0][:time_index], data_combos[current_data][1][:time_index], alpha=0.75, zorder=2)
-                # a.plot(data_combos[current_data][0][time_index], data_combos[current_data][1][time_index], '*', markersize=10, color='orange', zorder=4)
-                # a.plot(data_combos[current_data][0], data_combos[current_data][1], '-', color='darkgray', linewidth=0.5, zorder=1, alpha=0.75)
-                # a.set_aspect('equal')
 
                 pu.plot_orbit(a, data_combos[current_data][0], data_combos[current_data][1], time=self.t, time_index=time_index)
                 a.set_xlabel(labels[current_data][0])
@@ -317,29 +305,9 @@ class Orbit:
                 x_index = component_indices[labels[i][0]]
                 y_index = component_indices[labels[i][1]]
 
-                # points for plotting the tail
-                # tail_x_points = data_combos[i][0][time_index-20:time_index:-1]
-                # tail_y_points = pu.vector_to_tail_line(self.tail_angle_unit_vectors[time_index,[x_index, y_index]], [data_combos[i][0][time_index], data_combos[i][1][time_index]], tail_x_points)
-
-                # solution: normalize 2-D projected vector
-                # galaxy_x = data_combos[i][0][time_index].value
-                # galaxy_y = data_combos[i][1][time_index].value
-                # tail_length = 100
-                # tail_distance = 100
-                # steps = np.linspace(0, tail_distance, tail_length)  # negative to go backward
-
-                # normalized_2d_tail_angle_unit_vector = norm_vector(self.tail_angle_unit_vectors[time_index, [x_index,y_index]])
-
-                # tail_x_points = galaxy_x + steps * normalized_2d_tail_angle_unit_vector[0]
-                # tail_y_points = galaxy_y + steps * normalized_2d_tail_angle_unit_vector[1]
-
-                # tail_point_selection = np.abs(tail_y_points - data_combos[i][1][time_index].value) < 50
-                # tail_x_points_selected = tail_x_points[tail_point_selection]
-                # tail_y_points_selected = tail_y_points[tail_point_selection]
-
                 tail_vector = self.tail_angle_unit_vectors[time_index, [x_index, y_index]]
 
-                tail_x_points_selected, tail_y_points_selected = pu.calc_tail_line(a, data_combos[i][0], data_combos[i][1], tail_vector=tail_vector, time_index=time_index)
+                tail_x_points_selected, tail_y_points_selected = pu.calc_tail_line(data_combos[i][0], data_combos[i][1], tail_vector=tail_vector, time_index=time_index)
                 
                 a.plot(tail_x_points_selected, tail_y_points_selected, '-', color='red', zorder=3)
 
@@ -348,15 +316,75 @@ class Orbit:
     
     def project_orbit_tail_angles(self, view_dir):
 
+        """
+        Projects the orbit into a viewing frame defined by a line-of-sight direction, generating a 
+        Projected_Orbit object containing the galaxy's orbit and tail angles as seen from a specified viewing direction.
+
+            Parameters
+            ----------
+            view_dir: numpy.ndarray
+                Numpy array of shape (3,) containing a vector pointing in the direction of the viewer's line of sight.
+
+            Returns
+            -------
+            Projected_Orbit(self, view_dir): Projected_Orbit
+                An instance of the Projected_Orbit class containing information about the galaxy orbit and tail angles projected into the given viewing frame.
+        """
+
         return Projected_Orbit(self, view_dir)
     
 class Projected_Orbit:
 
+    """
+    Represents a galaxy's 3D orbit and tail directions projected into a 2D viewing frame.
+    
+    Generates a 2D projection of the orbit and tail angles in the observer's frame based on an existing
+    `Orbit` instance the the viewer's line of sight direction. Includes methods for plotting projected orbits
+    and comparing projected 2D and 3D tail angles.
+
+        Attributes
+        ----------
+        original_orbit: Orbit
+            Instance of the `Orbit` class from which the Projected_Orbit instance is instantiated, containing information about the 3D galaxy orbit and tail angles.
+        tail_angle_3d_unit_vectors: numpy.ndarray
+            Array of shape (N, 3) where each row is a 3D unit vector representing the galaxy tail direction at each simulation timestep.
+            Copied from `original_orbit`.
+        radial_tail_angles_3d_deg: numpy.ndarray
+            An array of 3D tail angles in degrees for each orbit timestep, measured as the angle between the
+            galaxy tail and the radial direction to cluster center. Copied from `original_orbit`.
+        view_dir_normed: numpy.ndarray
+            A normalized 3D vector along the viewer's line of sight.
+        rot_matrix: numpy.ndarray
+            3x3 rotation matrix for transforming Cartesian coordinates and vectors into the viewer's coordinate frame.
+        orbit_projected: numpy.ndarray
+            Numpy array of shape (N, 2) containing projected x and y coordinates of the orbit in each row, for all timesteps.
+        projected_x: numpy.ndarray
+            1D array of the x-coordinates of the orbit in the 2D projected plane for all timesteps.
+        projected_y: numpy.ndarray
+            1D array of the y-coordinates of the orbit in the 2D projected plane for all timesteps.
+        tail_angles_2d_vectors: numpy.ndarray
+            Array of shape (N, 2) in which each row represents a 2D unit vector representing the tail direction projected in the viewing plane, for all timesteps.
+        tail_angles_2d_relative_rad: numpy.ndarray
+            Array of 2D tail angles in radians measured between the projected tail direction and the projection radial direction toward cluster center.
+        tail_angles_2d_relative_deg: numpy.ndarray
+            Array of 2D tail angles in degrees measured between the projected tail direction and the projection radial direction toward cluster center.
+
+    """
+
     def __init__(self, original_orbit: Orbit, view_dir: np.ndarray):
 
-        from orbit import Orbit
+        """
+        Instantiates the Projected_Orbit class by performing a rotation and coordinate transformation of an existing `Orbit` instance 
+        to the coordinate basis specified by line of sight viewing direction `view_dir`. The orbit and tail vectors are transformed into
+        the viewer's 2D coordinate frame, and relevant 2D tail angles are computed.
 
-        '''view_dir is the direction the observer is looking towards!!'''
+            Parameters
+            ----------
+            original_orbit: Orbit
+                Existing instance of the `Orbit` class containing information about the 3D galaxy orbit and tail angles.
+            view_dir: numpy.ndarray
+                A 3D vector along the viewer's line of sight
+        """
         
         self.original_orbit = original_orbit
         self.tail_angle_3d_unit_vectors = self.original_orbit.tail_angle_unit_vectors
@@ -395,18 +423,32 @@ class Projected_Orbit:
         self.tail_angles_2d_vectors = norm_vector(self.tail_angles_2d_vectors) # normalizing calculated vectors
 
         tail_angles_2d = np.arctan2(self.tail_angles_2d_vectors[:,1], self.tail_angles_2d_vectors[:,0])
-        # towards_cluster_center_angle = np.arctan2(-self.projected_y.value, -self.projected_x.value)
-        # tail_angles_2d_relative = tail_angles_2d - towards_cluster_center_angle
-        # self.tail_angles_2d_relative_wrapped = (tail_angles_2d_relative + np.pi) % (2*np.pi) - np.pi
-        # self.tail_angles_2d_relative_deg = np.degrees(self.tail_angles_2d_relative_wrapped)
         cluster_center_angle = np.arctan2(self.projected_y.value, self.projected_x.value)
-        self.tail_angles_2d_relative = np.abs(tail_angles_2d - cluster_center_angle) # this gives the angle relative to the direction AWAY from the cluster center
-        self.tail_angles_2d_relative_deg = 180 - np.degrees(self.tail_angles_2d_relative) # subtract 180 degrees to get the angle relative to direction towards cluster center
+        self.tail_angles_2d_relative_rad = np.abs(tail_angles_2d - cluster_center_angle) # this gives the angle relative to the direction AWAY from the cluster center
+        self.tail_angles_2d_relative_deg = 180 - np.degrees(self.tail_angles_2d_relative_rad) # subtract 180 degrees to get the angle relative to direction towards cluster center
 
         self.t = self.original_orbit.t
 
     
-    def plot_projected_orbit(self, time_index):
+    def plot_projected_orbit(self, time_index, with_tail=False):
+
+        """
+        Plot 2D projection of the galaxy's orbit and velocity in Cartesian coordinates, with an optional overlay of the tail direction vector at a specified time index.
+
+            Parameters
+            ----------
+            time_index: int
+                Index into the time array `self.t` indicating the moment at which to show the orbit snapshot and (optionally) the tail direction.            
+            with_tails: boolean, optional
+                If True, plots the tail direction for the timestep specified by time_index together with the galaxy and orbit. 
+                Requires that calc_3d_tail_angles has already been run for the given orbit. Default: False
+            
+            Returns
+            -------
+            fig: matplotlib.pyplot.Figure
+                Figure object containing the galaxy orbit position plot.
+
+        """
         
         fig, ax = plt.subplots(1, 1)
 
@@ -422,9 +464,10 @@ class Projected_Orbit:
 
         pu.plot_orbit(ax, self.projected_x, self.projected_y, self.t, time_index=time_index)
 
-        tail_angle_vector = self.tail_angles_2d_vectors[time_index, :]
-        tail_x, tail_y = pu.calc_tail_line(ax, self.projected_x, self.projected_y, tail_angle_vector, time_index)
-        ax.plot(tail_x, tail_y, '-', color='red', zorder=3)
+        if with_tail:
+            tail_angle_vector = self.tail_angles_2d_vectors[time_index, :]
+            tail_x, tail_y = pu.calc_tail_line(self.projected_x, self.projected_y, tail_angle_vector, time_index)
+            ax.plot(tail_x, tail_y, '-', color='red', zorder=3)
 
         ax.set_xlabel('$x$ (kpc)')
         ax.set_ylabel('$y$ (kpc)')
@@ -433,6 +476,16 @@ class Projected_Orbit:
         return fig
 
     def comparison_plots(self, time_index=None):
+
+        """
+        Produces a plot for comparing true 3D tail angles and projected 2D counterparts.
+
+            Parameters
+            ----------
+            time_index: int, optional
+                Index into the time array `self.t` to create a vertical line indicating tail angles at a given point in the orbit.            
+            
+        """
 
         fig, ax = plt.subplots(1, 1)
         ax.set_title('Comparing 2D and 3D Tail Angles for Given Viewing Angle')
