@@ -9,13 +9,11 @@ from gala import integrate as gi
 from gala.units import galactic
 import streamlit.components.v1 as components
 
-from transforms import *
+from OrbitTails.transforms import *
 
 import matplotlib as mpl
 
-from orbit import Orbit
-from orbit import Projected_Orbit
-# from Projected_Orbit import Projected_Orbit
+from OrbitTails import Orbit, Projected_Orbit
 
 mpl.rcParams['animation.embed_limit'] = 100
 plt.rcParams['font.family']='serif'

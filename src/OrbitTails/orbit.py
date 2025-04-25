@@ -11,9 +11,9 @@ from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import matplotlib as mpl
 
-import plotting_utils as pu
+from . import plotting_utils as pu
 # from Projected_Orbit import Projected_Orbit
-from transforms import *
+from .transforms import *
 
 mpl.rcParams['animation.embed_limit'] = 50
 

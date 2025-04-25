@@ -3,3 +3,4 @@ numpy
 matplotlib
 astropy
 gala
+git+https://github.com/anam32123/OrbitTails/

@@ -4,9 +4,9 @@ Welcome to OrbitTails, a user-friendly Python package for simulating the orbits 
 
 ## Background
 
-Ram pressure stripping is the removal of gas from galaxies orbitting in clusters due to the pressure differential between a galaxy's interstellar medium and surrounding galactic medium. This process is key to the evolution of galaxies in large clusters, as complete gas removal quenches star formation. Ram pressure stripped galaxies form tails of stripped gas that extend behind the galaxy along its orbital path. Measurements of the angle of this tail, particularly relative to the cluster center, are key to understanding the evolution of ram pressure stripping during a galaxy's orbit, classifying ram pressure stripped galaxies, and elucidating how and why ram pressure stripping affects galaxies.
+Ram pressure stripping is the removal of gas from galaxies orbiting in clusters due to the pressure differential between a galaxy's interstellar medium and the surrounding intracluster medium. This process is key to the evolution of galaxies in large clusters, as complete gas removal quenches star formation. Ram pressure stripped galaxies form tails of stripped gas that extend behind the galaxy along its orbital path. Measurements of the angle of this tail, particularly relative to the cluster center, are key to understanding the evolution of ram pressure stripping during a galaxy's orbit, classifying ram pressure stripped galaxies, and elucidating how and why ram pressure stripping affects galaxies.
 
-However, such measurements are complicated because a galaxy's apparent tail angle on the sky may not match up with the reality of its three-dimensional directional or give us a clear understanding of the galaxy's three-dimensional motion in the cluster. OrbitTails aims to help observational astronomers understand the relationship between three-dimensional orbital motion and tail angle and observed two-dimensional angles in the sky. Users can simulate galaxy orbits in a cluster potential and compare the galaxy's three-dimensional tail direction with the observed two-dimensional angles at a variety of viewing angles throughout the entire orbit.
+However, such measurements are complicated because a galaxy's apparent tail angle on the sky may not match up with the reality of its three-dimensional direction or give us a clear understanding of the galaxy's three-dimensional motion in the cluster. OrbitTails aims to help observational astronomers understand the relationship between three-dimensional orbital motion and tail angle and observed two-dimensional angles in the sky. Users can simulate galaxy orbits in a cluster potential and compare the galaxy's three-dimensional tail direction with the observed two-dimensional angles at a variety of viewing angles throughout the entire orbit.
 
 ## Installation and Usage
 
@@ -16,7 +16,7 @@ An interactive web app developed with and hosted by **Streamlit** is the most us
 
 [orbittails.streamlit.app](https://orbittails.streamlit.app)
 
-## Local Streamlit App
+### Local Streamlit App
 
 Using the Streamlit app locally offers the same interface with slightly higher performance. To run it, ensure that git is set up with SSH keys, then clone the repository in your terminal:
 
@@ -24,11 +24,39 @@ Using the Streamlit app locally offers the same interface with slightly higher p
 git clone git@github.com:anam32123/OrbitTails.git
 ```
 
+Also ensure that you have installed the dependencies described below to your Python environment in order to run the software locally.
+
 In the main OrbitTails directory, open your local Streamlit by typing:
 
 ```
-streamlit run web_app.py
+streamlit run streamlit_app/web_app.py
 ```
+
+### Use the OrbitTails Python Package
+
+Use git to clone the repository in your terminal:
+
+```
+git clone git@github.com:anam32123/OrbitTails.git
+```
+
+Install OrbitTails using `pip` from the high-level `OrbitTails` directory:
+
+```
+pip install .
+```
+
+See `tutorial.ipynb` for examples of how to use the package.
+
+### Dependencies
+
+To run the local Streamlit app, play with the tutorial notebook, or otherwise import and use the OrbitTails libraries on your local machine, you must install the following packages to your Python environment:
+
+ - `streamlit`
+ - `numpy`
+ - `matplotlib`
+ - `astropy`
+ - `gala`
 
 ## Basic Functionality
 

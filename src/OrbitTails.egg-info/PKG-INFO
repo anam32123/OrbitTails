@@ -1,0 +1,14 @@
+Metadata-Version: 2.2
+Name: OrbitTails
+Version: 0.1
+Summary: A user-friendly Python package for calculating and comparing ram pressure stripped galaxy tail angles.
+Author: Ana Maria Melian
+Author-email: anamaria.melian@yale.edu
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: astropy
+Requires-Dist: gala
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary

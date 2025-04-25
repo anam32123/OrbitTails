@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import transforms as angles
+from . import transforms as angles
 
 def find_axes_limits(data, padding=0.05):
 
