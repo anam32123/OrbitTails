@@ -29,7 +29,7 @@ Also ensure that you have installed the dependencies described below to your Pyt
 In the main OrbitTails directory, open your local Streamlit by typing:
 
 ```
-streamlit run streamlit_app/web_app.py
+streamlit run web_app.py
 ```
 
 ### Use the OrbitTails Python Package
