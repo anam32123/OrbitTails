@@ -18,10 +18,16 @@ An interactive web app developed with and hosted by **Streamlit** is the most us
 
 ## Local Streamlit App
 
-Using the Streamlit app locally offers the same interface with slightly higher performance. To run it, ensure that git is set up with SSH keys, then clone the repository:
+Using the Streamlit app locally offers the same interface with slightly higher performance. To run it, ensure that git is set up with SSH keys, then clone the repository in your terminal:
 
 ```
-git clone
+git clone git@github.com:anam32123/OrbitTails.git
+```
+
+In the main OrbitTails directory, open your local Streamlit by typing:
+
+```
+streamlit run web_app.py
 ```
 
 ## Basic Functionality
@@ -38,6 +44,6 @@ git clone
 
  ## Documentation and Tutorials
 
- Navigate to the `/tutorial` directory and access `OrbitTails_tutorial.py` for example usage of the OrbitTails package in Python. 
+ Access the `tutorial.ipynb` notebook for example usage of the OrbitTails source code in Python. 
 
  All methods, classes, and scripts are well-commented and contain descriptive docstrings.
