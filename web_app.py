@@ -117,7 +117,9 @@ st.subheader('View 3D Tail Angles')
 # Plot orbits and output tail anglesfor a specific time
 angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0., )
 angle_time_index = list(galaxy_orbit.t).index(angle_time) # which time to use for plot and tail angles
-fig = galaxy_orbit.plot_orbits_not_animated(angle_time_index, with_tails=True)
+# include contours?
+include_contours = st.checkbox(label="Include contours on orbit plot")
+fig = galaxy_orbit.plot_orbits_not_animated(angle_time_index, with_tails=True, include_contours=include_contours)
 st.pyplot(fig)
 vec_3d = galaxy_orbit.tail_angle_unit_vectors[angle_time_index, :]
 st.markdown(f"**3D Tail Direction Unit Vector**: ({vec_3d[0]:.2f}, {vec_3d[1]:.2f}, {vec_3d[2]:.2f})")
@@ -148,6 +150,7 @@ if viewing_angle_sys=='3D Vector':
 # select time at which to view orbit and angle
 angle_time = st.select_slider('Time since initial conditions (Myr)', options=list(galaxy_orbit.t), value=0., key='2dtime')
 angle_time_index = list(galaxy_orbit.t).index(angle_time)
+
 
 # project 3D orbit into the viewing frame and plot the results
 orbit_projected = galaxy_orbit.project_orbit_tail_angles(view_dir = viewing_angle_vector)
